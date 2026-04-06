@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Роман Лабин — AI Strategy Partner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent1: #7c3aed;
+      --accent2: #06b6d4;
+      --accent3: #a855f7;
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --border: rgba(255,255,255,0.07);
+      --text: #e2e8f0;
+      --muted: #64748b;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80vw;
+      height: 60vw;
+      background: radial-gradient(ellipse, rgba(124,58,237,0.15) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -20%;
+      right: -10%;
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(ellipse, rgba(6,182,212,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: min(480px, 92vw);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 52px 44px 44px;
+      text-align: center;
+      box-shadow:
+        0 0 0 1px rgba(124,58,237,0.1),
+        0 32px 80px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+      animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Rotating border gradient */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 28px;
+      background: conic-gradient(
+        from var(--angle, 0deg),
+        transparent 0%,
+        rgba(124,58,237,0.6) 20%,
+        rgba(6,182,212,0.5) 40%,
+        transparent 60%
+      );
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      padding: 1px;
+      animation: rotateBorder 4s linear infinite;
+      z-index: -1;
+    }
+
+    @property --angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+    @keyframes rotateBorder {
+      to { --angle: 360deg; }
+    }
+
+    /* Avatar */
+    .avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -1px;
+      box-shadow:
+        0 0 0 3px rgba(124,58,237,0.3),
+        0 0 30px rgba(124,58,237,0.4);
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(124,58,237,0.3), 0 0 30px rgba(124,58,237,0.4); }
+      50%       { box-shadow: 0 0 0 6px rgba(124,58,237,0.15), 0 0 50px rgba(124,58,237,0.5); }
+    }
+
+    /* Name */
+    .name {
+      font-size: clamp(28px, 7vw, 38px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 0%, var(--accent3) 50%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(168,85,247,0.5));
+      animation: shimmer 3s ease-in-out infinite alternate;
+    }
+    @keyframes shimmer {
+      from { filter: drop-shadow(0 0 12px rgba(168,85,247,0.4)); }
+      to   { filter: drop-shadow(0 0 28px rgba(6,182,212,0.6)); }
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 14px 0 28px;
+      padding: 6px 14px;
+      background: rgba(124,58,237,0.12);
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent3);
+      letter-spacing: 0.3px;
+    }
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent2);
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), rgba(124,58,237,0.3), var(--border), transparent);
+      margin: 0 0 28px;
+    }
+
+    /* Social icons */
+    .socials {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .social-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+      overflow: hidden;
+    }
+    .social-link::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--hover-bg, transparent);
+      opacity: 0;
+      transition: opacity 0.25s;
+      border-radius: inherit;
+    }
+    .social-link:hover {
+      transform: translateY(-5px) scale(1.1);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 8px 24px var(--hover-shadow, rgba(124,58,237,0.4));
+    }
+    .social-link:hover::before { opacity: 1; }
+
+    .social-link.tg   { --hover-bg: linear-gradient(135deg,#0088cc,#00b4d8); --hover-shadow: rgba(0,136,204,0.5); }
+    .social-link.li   { --hover-bg: linear-gradient(135deg,#0077b5,#00a0dc); --hover-shadow: rgba(0,119,181,0.5); }
+    .social-link.tw   { --hover-bg: linear-gradient(135deg,#1da1f2,#0d8ecf); --hover-shadow: rgba(29,161,242,0.5); }
+    .social-link.gh   { --hover-bg: linear-gradient(135deg,#333,#6e40c9);    --hover-shadow: rgba(110,64,201,0.5); }
+
+    .social-link svg { position: relative; z-index: 1; }
+
+    /* Tooltip */
+    .social-link[data-tip] { position: relative; }
+    .social-link[data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: rgba(15,15,15,0.95);
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s;
+      border: 1px solid var(--border);
+    }
+    .social-link:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* CTA button */
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 32px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent3), var(--accent2));
+      background-size: 200% 200%;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.2px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+      animation: gradientShift 4s ease infinite;
+      box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+      width: 100%;
+      justify-content: center;
+    }
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .cta:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 10px 35px rgba(124,58,237,0.55);
+    }
+    .cta:active {
+      transform: translateY(0) scale(0.98);
+    }
+    .cta svg { flex-shrink: 0; }
+
+    /* Ripple effect */
+    .cta { position: relative; overflow: hidden; }
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      transform: scale(0);
+      animation: rippleAnim 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes rippleAnim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 24px;
+      font-size: 11px;
+      color: rgba(100,116,139,0.5);
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <div class="avatar">РЛ</div>
+
+    <h1 class="name">Роман Лабин</h1>
+
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Партнёр по ИИ стратегии
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="socials">
+
+      <!-- Telegram -->
+      <a class="social-link tg" href="https://t.me/rlabin" target="_blank" rel="noopener" data-tip="@rlabin">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.93 6.779l-1.68 7.922c-.126.562-.454.7-.92.435l-2.548-1.877-1.228 1.183c-.136.136-.25.25-.512.25l.182-2.598 4.714-4.259c.205-.182-.045-.283-.317-.1L8.15 14.338l-2.494-.779c-.542-.169-.552-.542.113-.803l9.728-3.75c.451-.164.847.1.432.773z" fill="currentColor"/>
+        </svg>
+      </a>
+
+      <!-- LinkedIn -->
+      <a class="social-link li" href="#" target="_blank" rel="noopener" data-tip="LinkedIn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="4" cy="4" r="2" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </a>
+
+      <!-- Twitter / X -->
+      <a class="social-link tw" href="#" target="_blank" rel="noopener" data-tip="Twitter / X">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+      </a>
+
+      <!-- GitHub -->
+      <a class="social-link gh" href="#" target="_blank" rel="noopener" data-tip="GitHub">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+        </svg>
+      </a>
+
+    </div>
+
+    <a class="cta" href="https://t.me/rlabin" target="_blank" rel="noopener" id="ctaBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M22 2L15 22 11 13 2 9l20-7z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Написать мне
+    </a>
+
+    <p class="footer">AI · Strategy · Innovation</p>
+  </div>
+
+  <script>
+    // Ripple effect on CTA button
+    document.getElementById('ctaBtn').addEventListener('click', function(e) {
+      const btn = this;
+      const rect = btn.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height) * 1.5;
+      const x = e.clientX - rect.left - size / 2;
+      const y = e.clientY - rect.top  - size / 2;
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
+      btn.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+
+    // Subtle parallax tilt on card
+    const card = document.querySelector('.card');
+    document.addEventListener('mousemove', (e) => {
+      const cx = window.innerWidth  / 2;
+      const cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx;
+      const dy = (e.clientY - cy) / cy;
+      card.style.transform = `perspective(900px) rotateY(${dx * 5}deg) rotateX(${-dy * 5}deg)`;
+    });
+    document.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(900px) rotateY(0deg) rotateX(0deg)';
+      card.style.transition = 'transform 0.5s ease';
+    });
+    document.addEventListener('mousemove', () => {
+      card.style.transition = 'transform 0.1s ease';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartCalc — умный калькулятор мягкой мебели</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --a1: #7c3aed;
+      --a2: #6366f1;
+      --a3: #06b6d4;
+      --a4: #a855f7;
+      --bg: #07070f;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background ── */
+    .bg-wrap {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      overflow: hidden;
+    }
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.55;
+    }
+    .bg-orb-1 {
+      width: 70vw; height: 70vw;
+      top: -25vw; left: -15vw;
+      background: radial-gradient(circle, rgba(124,58,237,0.5), transparent 70%);
+      animation: orbFloat 12s ease-in-out infinite alternate;
+    }
+    .bg-orb-2 {
+      width: 50vw; height: 50vw;
+      bottom: -15vw; right: -10vw;
+      background: radial-gradient(circle, rgba(6,182,212,0.4), transparent 70%);
+      animation: orbFloat 15s ease-in-out infinite alternate-reverse;
+    }
+    .bg-orb-3 {
+      width: 35vw; height: 35vw;
+      top: 45%; left: 55%;
+      background: radial-gradient(circle, rgba(99,102,241,0.3), transparent 70%);
+      animation: orbFloat 10s ease-in-out infinite alternate;
+    }
+    @keyframes orbFloat {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(3vw, 4vw) scale(1.08); }
+    }
+
+    /* Noise overlay */
+    .bg-wrap::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
+
+    /* ── Layout ── */
+    .page { position: relative; z-index: 1; }
+
+    /* ── Nav ── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px clamp(20px, 6vw, 80px);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(7,7,15,0.7);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 17px; font-weight: 700;
+      background: linear-gradient(135deg, #fff, var(--a4));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .nav-logo svg { flex-shrink: 0; }
+    .nav-badge {
+      font-size: 11px; font-weight: 500; color: var(--a3);
+      padding: 3px 10px;
+      border: 1px solid rgba(6,182,212,0.3);
+      border-radius: 100px;
+      background: rgba(6,182,212,0.07);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: clamp(60px, 12vw, 120px) clamp(20px, 6vw, 80px) clamp(40px, 8vw, 80px);
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px;
+      border: 1px solid rgba(124,58,237,0.35);
+      border-radius: 100px;
+      font-size: 12px; font-weight: 500; letter-spacing: 0.8px;
+      color: var(--a4);
+      background: rgba(124,58,237,0.08);
+      margin-bottom: 28px;
+      animation: fadeDown 0.6s ease both;
+    }
+    .hero-tag-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--a3);
+      animation: blink 2s ease infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .hero-title {
+      font-size: clamp(36px, 8vw, 70px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 10px;
+      animation: fadeDown 0.6s 0.1s ease both;
+    }
+    .hero-title-plain { color: #fff; }
+    .hero-title-grad {
+      background: linear-gradient(135deg, var(--a4) 0%, var(--a2) 40%, var(--a3) 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 30px rgba(124,58,237,0.5));
+    }
+
+    .hero-sub {
+      font-size: clamp(15px, 2.5vw, 19px);
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 640px;
+      margin: 20px auto 36px;
+      animation: fadeDown 0.6s 0.2s ease both;
+    }
+    .hero-sub strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* CTA group */
+    .cta-group {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      animation: fadeDown 0.6s 0.3s ease both;
+    }
+
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 17px 40px;
+      font-size: 16px; font-weight: 700;
+      color: #fff; text-decoration: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--a1), var(--a4), var(--a3));
+      background-size: 200%;
+      position: relative; overflow: hidden;
+      box-shadow: 0 0 0 0 rgba(124,58,237,0.5);
+      animation: gradShift 5s ease infinite, ctaPulse 2.5s ease infinite;
+      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), filter 0.2s;
+      border: none; cursor: pointer;
+    }
+    @keyframes gradShift {
+      0%  { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100%{ background-position: 0% 50%; }
+    }
+    @keyframes ctaPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.5), 0 8px 32px rgba(124,58,237,0.35); }
+      50%      { box-shadow: 0 0 0 12px rgba(124,58,237,0), 0 8px 32px rgba(124,58,237,0.5); }
+    }
+    .cta-btn:hover {
+      transform: translateY(-3px) scale(1.03);
+      filter: brightness(1.1);
+    }
+    .cta-btn:active { transform: scale(0.97); }
+
+    /* Ripple */
+    .ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      transform: scale(0);
+      animation: rippleAnim 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+
+    .cta-link {
+      font-size: 13px; color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .cta-link span { color: var(--a3); }
+    .cta-link:hover { color: var(--text); }
+
+    /* ── Stats row ── */
+    .stats {
+      display: flex; justify-content: center; flex-wrap: wrap;
+      gap: 12px 32px;
+      padding: 0 clamp(20px, 6vw, 80px) clamp(40px, 6vw, 60px);
+      animation: fadeDown 0.6s 0.4s ease both;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 16px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      min-width: 130px;
+      flex: 1;
+      max-width: 200px;
+    }
+    .stat-num {
+      font-size: 26px; font-weight: 800;
+      background: linear-gradient(135deg, #fff, var(--a3));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Section title ── */
+    .section-wrap {
+      padding: 0 clamp(20px, 6vw, 80px) clamp(60px, 8vw, 100px);
+      max-width: 1100px; margin: 0 auto;
+    }
+    .section-head {
+      text-align: center; margin-bottom: 48px;
+    }
+    .section-eyebrow {
+      font-size: 12px; font-weight: 600; letter-spacing: 1.5px;
+      color: var(--a3); text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(26px, 5vw, 40px);
+      font-weight: 800; letter-spacing: -1px;
+      color: #fff;
+    }
+    .section-title span {
+      background: linear-gradient(135deg, var(--a4), var(--a3));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* ── Cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 32px 28px;
+      position: relative; overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s, border-color 0.3s;
+      cursor: default;
+    }
+    .card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--card-c1, rgba(124,58,237,0.06)), var(--card-c2, rgba(6,182,212,0.04)));
+      opacity: 0; transition: opacity 0.3s;
+      border-radius: inherit;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: var(--card-border, rgba(124,58,237,0.35));
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px var(--card-border, rgba(124,58,237,0.2));
+    }
+    .card:hover::before { opacity: 1; }
+
+    .card-1 { --card-c1: rgba(124,58,237,0.1); --card-c2: rgba(99,102,241,0.05); --card-border: rgba(124,58,237,0.4); }
+    .card-2 { --card-c1: rgba(6,182,212,0.08); --card-c2: rgba(16,185,129,0.05); --card-border: rgba(6,182,212,0.4); }
+    .card-3 { --card-c1: rgba(168,85,247,0.08); --card-c2: rgba(236,72,153,0.05); --card-border: rgba(168,85,247,0.4); }
+
+    .card-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+      position: relative; z-index: 1;
+    }
+    .card-1 .card-icon { background: rgba(124,58,237,0.15); box-shadow: 0 0 20px rgba(124,58,237,0.2); }
+    .card-2 .card-icon { background: rgba(6,182,212,0.12); box-shadow: 0 0 20px rgba(6,182,212,0.2); }
+    .card-3 .card-icon { background: rgba(168,85,247,0.12); box-shadow: 0 0 20px rgba(168,85,247,0.2); }
+
+    .card-title {
+      font-size: 18px; font-weight: 700; color: #fff;
+      margin-bottom: 10px; position: relative; z-index: 1;
+    }
+    .card-text {
+      font-size: 14px; color: var(--muted);
+      line-height: 1.7; position: relative; z-index: 1;
+    }
+    .card-text strong { color: var(--text); font-weight: 600; }
+
+    /* ── How it works ── */
+    .how-wrap {
+      padding: 0 clamp(20px, 6vw, 80px) clamp(60px, 8vw, 100px);
+      max-width: 900px; margin: 0 auto;
+    }
+    .steps {
+      display: flex; flex-direction: column; gap: 0;
+      position: relative;
+    }
+    .steps::before {
+      content: '';
+      position: absolute; left: 26px; top: 52px; bottom: 52px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--a1), var(--a3));
+      opacity: 0.3;
+    }
+    .step {
+      display: flex; gap: 24px; align-items: flex-start;
+      padding: 24px 0;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: #fff;
+      background: linear-gradient(135deg, var(--a1), var(--a2));
+      box-shadow: 0 0 20px rgba(124,58,237,0.35);
+      position: relative; z-index: 1;
+    }
+    .step-body { padding-top: 10px; }
+    .step-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .step-text  { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+    /* ── For whom ── */
+    .audience-wrap {
+      padding: 0 clamp(20px, 6vw, 80px) clamp(60px, 8vw, 100px);
+      max-width: 1100px; margin: 0 auto;
+    }
+    .audience-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .audience-card {
+      padding: 24px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      transition: border-color 0.25s, transform 0.25s;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .audience-card:hover {
+      border-color: rgba(124,58,237,0.35);
+      transform: translateY(-4px);
+    }
+    .audience-icon {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(124,58,237,0.12);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .audience-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .audience-text  { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+    /* ── CTA Section ── */
+    .cta-section {
+      padding: 0 clamp(20px, 6vw, 80px) clamp(80px, 10vw, 120px);
+      text-align: center;
+    }
+    .cta-box {
+      max-width: 700px; margin: 0 auto;
+      padding: clamp(40px, 6vw, 64px) clamp(24px, 5vw, 64px);
+      background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(6,182,212,0.08));
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: 28px;
+      position: relative; overflow: hidden;
+    }
+    .cta-box::before {
+      content: '';
+      position: absolute; inset: -1px;
+      background: conic-gradient(from var(--a, 0deg), transparent 0%, rgba(124,58,237,0.5) 20%, rgba(6,182,212,0.4) 40%, transparent 60%);
+      border-radius: inherit;
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      padding: 1px;
+      animation: rotateBorder 5s linear infinite;
+      z-index: 0;
+    }
+    @property --a { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+    @keyframes rotateBorder { to { --a: 360deg; } }
+
+    .cta-box-title {
+      font-size: clamp(22px, 4vw, 32px); font-weight: 800;
+      color: #fff; margin-bottom: 12px;
+      position: relative; z-index: 1;
+    }
+    .cta-box-sub {
+      font-size: 15px; color: var(--muted); margin-bottom: 32px;
+      line-height: 1.6; position: relative; z-index: 1;
+    }
+    .cta-box .cta-group { position: relative; z-index: 1; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12px; color: rgba(100,116,139,0.5);
+      letter-spacing: 0.4px;
+    }
+
+    /* ── Scroll reveal ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Mobile tweaks ── */
+    @media (max-width: 600px) {
+      .stats { gap: 10px; }
+      .stat-item { min-width: 100px; padding: 12px 16px; }
+      .steps::before { left: 24px; }
+      .cta-btn { padding: 15px 28px; font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-wrap">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+</div>
+
+<div class="page">
+
+  <!-- Nav -->
+  <nav>
+    <div class="nav-logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <rect width="26" height="26" rx="8" fill="url(#lg1)"/>
+        <path d="M7 13h4l2-5 2 10 2-5h2" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#7c3aed"/><stop offset="1" stop-color="#06b6d4"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      SmartCalc
+    </div>
+    <div class="nav-badge">AI-продукт</div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-tag">
+      <span class="hero-tag-dot"></span>
+      Умный калькулятор мягкой мебели
+    </div>
+
+    <h1 class="hero-title">
+      <span class="hero-title-plain">Считай честно —</span><br/>
+      <span class="hero-title-grad">продавай уверенно</span>
+    </h1>
+
+    <p class="hero-sub">
+      SmartCalc мгновенно рассчитывает стоимость мягкой мебели по параметрам клиента
+      и сразу объясняет ценность каждого выбора, заранее снимая типовые возражения о цене.
+      <strong>Прозрачный расчёт повышает доверие, сокращает время менеджеров и увеличивает конверсию в заявку.</strong>
+    </p>
+
+    <div class="cta-group">
+      <a class="cta-btn" href="https://t.me/rlabin" target="_blank" rel="noopener" id="heroBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Получить демо
+      </a>
+      <a class="cta-link" href="https://t.me/rlabin" target="_blank" rel="noopener">
+        Написать напрямую: <span>@rlabin</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats reveal">
+    <div class="stat-item">
+      <div class="stat-num">3×</div>
+      <div class="stat-label">быстрее обработка заявки</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">−60%</div>
+      <div class="stat-label">типовых вопросов о цене</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">+40%</div>
+      <div class="stat-label">конверсия в заявку</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">0</div>
+      <div class="stat-label">внешних зависимостей</div>
+    </div>
+  </div>
+
+  <!-- Benefits -->
+  <div class="section-wrap reveal">
+    <div class="section-head">
+      <div class="section-eyebrow">Преимущества</div>
+      <h2 class="section-title">Почему клиенты выбирают <span>SmartCalc</span></h2>
+    </div>
+    <div class="cards">
+
+      <div class="card card-1">
+        <div class="card-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="card-title">Прозрачная цена</div>
+        <div class="card-text">
+          Клиент сам настраивает параметры и <strong>видит стоимость в реальном времени</strong> — без ощущения «чёрного ящика».
+          Каждая опция сопровождается объяснением ценности.
+        </div>
+      </div>
+
+      <div class="card card-2">
+        <div class="card-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#06b6d4" stroke-width="2"/>
+            <path d="M12 6v6l4 2" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="card-title">Менеджер экономит время</div>
+        <div class="card-text">
+          Калькулятор <strong>снимает типовые возражения до звонка</strong>: «почему так дорого?», «а что входит в цену?».
+          Менеджер получает готового к покупке клиента.
+        </div>
+      </div>
+
+      <div class="card card-3">
+        <div class="card-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="16 7 22 7 22 13" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="card-title">Конверсия растёт</div>
+        <div class="card-text">
+          Понятная демонстрация выгод <strong>помогает продавать не дешевле, а увереннее</strong>.
+          Клиент понимает за что платит — и охотнее оставляет заявку.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="how-wrap reveal">
+    <div class="section-head">
+      <div class="section-eyebrow">Как это работает</div>
+      <h2 class="section-title">Три шага до <span>готовой заявки</span></h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Клиент настраивает параметры</div>
+          <div class="step-text">Выбирает тип мебели, ткань, размер, наполнитель и дополнительные опции — всё через удобный интерфейс прямо на сайте.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Калькулятор считает и объясняет</div>
+          <div class="step-text">Стоимость обновляется мгновенно. Рядом с каждой опцией — короткое пояснение ценности материала или технологии.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Клиент оставляет заявку</div>
+          <div class="step-text">Готовый расчёт и параметры автоматически уходят менеджеру — без лишних вопросов и переписки.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- For whom -->
+  <div class="audience-wrap reveal">
+    <div class="section-head">
+      <div class="section-eyebrow">Для кого</div>
+      <h2 class="section-title">Подходит для <span>мебельного бизнеса</span></h2>
+    </div>
+    <div class="audience-grid">
+      <div class="audience-card">
+        <div class="audience-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="18" height="18" rx="4" stroke="#7c3aed" stroke-width="2"/>
+            <path d="M3 9h18M9 21V9" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="audience-title">Производства</div>
+          <div class="audience-text">Мебельные фабрики и цеха, которые принимают индивидуальные заказы</div>
+        </div>
+      </div>
+      <div class="audience-card">
+        <div class="audience-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
+            <path d="M9 22V12h6v10" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="audience-title">Салоны мебели</div>
+          <div class="audience-text">Шоурумы и магазины мягкой мебели с широким ассортиментом вариантов</div>
+        </div>
+      </div>
+      <div class="audience-card">
+        <div class="audience-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="audience-title">Студии на заказ</div>
+          <div class="audience-text">Дизайн-студии и ателье, создающие мебель под запрос клиента</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA Section -->
+  <div class="cta-section reveal">
+    <div class="cta-box">
+      <h2 class="cta-box-title">Готовы увеличить конверсию?</h2>
+      <p class="cta-box-sub">Запросите демо — покажем как SmartCalc работает на вашем ассортименте и ценах</p>
+      <div class="cta-group">
+        <a class="cta-btn" href="https://t.me/rlabin" target="_blank" rel="noopener" id="ctaBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Получить демо
+        </a>
+        <a class="cta-link" href="https://t.me/rlabin" target="_blank" rel="noopener">
+          Написать напрямую: <span>@rlabin</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>SmartCalc · AI-продукт для мебельного бизнеса · <a href="https://t.me/rlabin" style="color:inherit;text-decoration:none;">@rlabin</a></footer>
+
+</div>
+
+<script>
+  // Ripple on CTA buttons
+  ['heroBtn','ctaBtn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('click', function(e) {
+      const rect = btn.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height) * 1.5;
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+      btn.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(el => {
+      if (el.isIntersecting) {
+        el.target.classList.add('visible');
+        observer.unobserve(el.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Parallax on hero title on mousemove
+  const hero = document.querySelector('.hero');
+  document.addEventListener('mousemove', (e) => {
+    const dx = (e.clientX / window.innerWidth  - 0.5) * 12;
+    const dy = (e.clientY / window.innerHeight - 0.5) * 8;
+    hero.style.transform = `translate(${dx * 0.3}px, ${dy * 0.3}px)`;
+  });
+</script>
+</body>
+</html>
